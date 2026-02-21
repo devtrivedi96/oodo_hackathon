@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
+import { AppView, VIEW_ACCESS } from "../../lib/access";
 import {
   LayoutDashboard,
   Truck,
@@ -14,60 +15,25 @@ import {
 } from "lucide-react";
 
 interface SidebarProps {
-  currentView: string;
-  onViewChange: (view: string) => void;
+  currentView: AppView;
+  onViewChange: (view: AppView) => void;
 }
 
 export default function Sidebar({ currentView, onViewChange }: SidebarProps) {
   const { signOut, profile } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
-  const menuItems = [
-    {
-      id: "dashboard",
-      label: "Dashboard",
-      icon: LayoutDashboard,
-      roles: ["Manager", "Dispatcher", "Safety Officer", "Analyst"],
-    },
-    {
-      id: "vehicles",
-      label: "Vehicles",
-      icon: Truck,
-      roles: ["Manager", "Dispatcher", "Safety Officer", "Analyst"],
-    },
-    {
-      id: "drivers",
-      label: "Drivers",
-      icon: Users,
-      roles: ["Manager", "Dispatcher", "Safety Officer", "Analyst"],
-    },
-    {
-      id: "trips",
-      label: "Trips",
-      icon: Route,
-      roles: ["Manager", "Dispatcher", "Analyst"],
-    },
-    {
-      id: "maintenance",
-      label: "Maintenance",
-      icon: Wrench,
-      roles: ["Manager", "Analyst"],
-    },
-    {
-      id: "expenses",
-      label: "Expenses",
-      icon: IndianRupee,
-      roles: ["Manager", "Analyst"],
-    },
-    {
-      id: "analytics",
-      label: "Analytics",
-      icon: BarChart3,
-      roles: ["Manager", "Analyst"],
-    },
-  ];
+  const iconMap = {
+    dashboard: LayoutDashboard,
+    vehicles: Truck,
+    drivers: Users,
+    trips: Route,
+    maintenance: Wrench,
+    expenses: IndianRupee,
+    analytics: BarChart3,
+  } as const;
 
-  const visibleItems = menuItems.filter(
+  const visibleItems = VIEW_ACCESS.filter(
     (item) => profile && item.roles.includes(profile.role),
   );
 
@@ -118,7 +84,7 @@ export default function Sidebar({ currentView, onViewChange }: SidebarProps) {
         <nav className="flex-1 overflow-y-auto p-4">
           <ul className="space-y-2">
             {visibleItems.map((item) => {
-              const Icon = item.icon;
+              const Icon = iconMap[item.id];
               const isActive = currentView === item.id;
               return (
                 <li key={item.id}>

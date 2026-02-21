@@ -21,8 +21,17 @@ export default function VerifyOTP() {
       await authAPI.verifyOTP(email, otp);
       alert("Email verified successfully!");
       navigate("/login");
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Invalid OTP");
+    } catch (err: unknown) {
+      const message =
+        typeof err === "object" &&
+        err !== null &&
+        "response" in err &&
+        typeof (err as { response?: { data?: { message?: string } } }).response
+          ?.data?.message === "string"
+          ? (err as { response?: { data?: { message?: string } } }).response!.data!
+              .message!
+          : "Invalid OTP";
+      setError(message);
     } finally {
       setLoading(false);
     }

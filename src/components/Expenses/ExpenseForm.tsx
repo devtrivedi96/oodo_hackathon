@@ -9,19 +9,12 @@ interface ExpenseFormProps {
 
 const DEFAULT_USD_TO_INR = Number(import.meta.env.VITE_USD_TO_INR) || 83;
 
+// Normalizes text input to a valid non-negative number for safe calculations.
 const parseNonNegative = (value: string) => {
   const parsed = Number.parseFloat(value);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
 };
 
-const roundToTwo = (value: number) =>
-  Math.round((value + Number.EPSILON) * 100) / 100;
-
-const EXPENSE_TYPES = [
-  { value: "fuel", label: "Fuel" },
-  { value: "misc", label: "Miscellaneous" },
-  { value: "other", label: "Other" },
-];
 const roundToTwo = (value: number) =>
   Math.round((value + Number.EPSILON) * 100) / 100;
 
@@ -42,8 +35,6 @@ export default function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  const [expenseType, setExpenseType] = useState(EXPENSE_TYPES[0].value);
 
   useEffect(() => {
     loadData();
@@ -102,9 +93,6 @@ export default function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
     }
 
     if (fuelLiters > 0 && fuelPricePerLiter <= 0) {
-      setError(
-        "Enter fuel price per liter when fuel liters is greater than 0.",
-      );
       setError(
         "Enter fuel price per liter when fuel liters is greater than 0.",
       );

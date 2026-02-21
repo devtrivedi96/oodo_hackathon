@@ -99,7 +99,7 @@ export default function TripDispatcher() {
       });
 
       await loadTrips();
-    } catch (error) {
+    } catch {
       alert("Error dispatching trip");
     }
   }
@@ -148,7 +148,7 @@ export default function TripDispatcher() {
       await refreshDriverCompletionRate(trip.driver_id);
 
       await loadTrips();
-    } catch (error) {
+    } catch {
       alert("Error completing trip");
     }
   }
@@ -175,7 +175,7 @@ export default function TripDispatcher() {
       }
 
       await loadTrips();
-    } catch (error) {
+    } catch {
       alert("Error cancelling trip");
     }
   }

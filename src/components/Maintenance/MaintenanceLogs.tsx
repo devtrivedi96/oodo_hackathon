@@ -50,7 +50,7 @@ export default function MaintenanceLogs() {
       await vehicleAPI.update(vehicleId, { status: "Available" });
 
       await loadLogs();
-    } catch (error) {
+    } catch {
       alert("Error closing maintenance log");
     }
   }

@@ -25,8 +25,26 @@ export default function Register() {
       // Redirect to Verify OTP page
       navigate("/verify-otp", { state: { email } });
 
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to sign up");
+    } catch (err: unknown) {
+      const responseData =
+        typeof err === "object" &&
+        err !== null &&
+        "response" in err &&
+        typeof (err as { response?: { data?: unknown } }).response?.data ===
+          "object"
+          ? ((err as { response?: { data?: Record<string, unknown> } }).response
+              ?.data ?? {})
+          : {};
+
+      const message =
+        typeof responseData.message === "string"
+          ? responseData.message
+          : typeof responseData.error === "string"
+            ? responseData.error
+          : err instanceof Error
+            ? err.message
+            : "Failed to sign up";
+      setError(message);
     } finally {
       setLoading(false);
     }

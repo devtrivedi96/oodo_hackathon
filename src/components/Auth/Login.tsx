@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import { authAPI } from "../../lib/db";
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function Login() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -21,13 +23,42 @@ export default function Login() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPassword = password.trim();
+
+    if (!EMAIL_PATTERN.test(normalizedEmail)) {
+      setError("Enter a valid email ID.");
+      return;
+    }
+
+    if (normalizedPassword.length < 6) {
+      setError("Password must be at least 6 characters.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      await signIn(email, password);
-      navigate("/");   // go to dashboard (ProtectedLayout)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to sign in");
+      await signIn(normalizedEmail, normalizedPassword);
+      navigate("/"); // go to dashboard (ProtectedLayout)
+    } catch (err: unknown) {
+      const message =
+        typeof err === "object" &&
+        err !== null &&
+        "response" in err &&
+        typeof (err as { response?: { data?: { message?: string; error?: string } } })
+          .response?.data?.message === "string"
+          ? (err as { response?: { data?: { message?: string } } }).response!.data!
+              .message!
+          : typeof
+                (err as { response?: { data?: { message?: string; error?: string } } })
+                  .response?.data?.error === "string"
+            ? (err as { response?: { data?: { error?: string } } }).response!.data!
+                .error!
+            : err instanceof Error
+              ? err.message
+              : "Failed to sign in";
+      setError(message);
     } finally {
       setLoading(false);
     }

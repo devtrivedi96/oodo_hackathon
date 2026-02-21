@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   vehicleAPI,
   tripAPI,
@@ -28,6 +28,14 @@ interface TripWithDetails extends Trip {
   driver: Driver | null;
 }
 
+const toFiniteNumber = (value: unknown) => {
+  const parsed = typeof value === "number" ? value : Number.parseFloat(String(value));
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const sanitizePercent = (value: number) =>
+  Math.min(100, Math.max(0, Math.round(toFiniteNumber(value))));
+
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     activeFleet: 0,
@@ -45,20 +53,7 @@ export default function Dashboard() {
     region: "all",
   });
 
-  const toFiniteNumber = (value: unknown) => {
-    const parsed =
-      typeof value === "number" ? value : Number.parseFloat(String(value));
-    return Number.isFinite(parsed) ? parsed : 0;
-  };
-
-  const sanitizePercent = (value: number) =>
-    Math.min(100, Math.max(0, Math.round(toFiniteNumber(value))));
-
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
-
-  async function loadDashboardData() {
+  const loadDashboardData = useCallback(async () => {
     try {
       setRefreshing(true);
       const [vehicles, trips, drivers] = await Promise.all([
@@ -109,7 +104,11 @@ export default function Dashboard() {
       setLoading(false);
       setRefreshing(false);
     }
-  }
+  }, []);
+
+  useEffect(() => {
+    loadDashboardData();
+  }, [loadDashboardData]);
 
   const filteredTrips = trips.filter((trip) => {
     if (filters.status !== "all" && trip.status !== filters.status)

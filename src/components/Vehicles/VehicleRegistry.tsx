@@ -33,7 +33,7 @@ export default function VehicleRegistry() {
     try {
       await vehicleAPI.delete(id);
       await loadVehicles();
-    } catch (error) {
+    } catch {
       alert("Error deleting vehicle. It may be assigned to trips.");
     }
   }
@@ -49,7 +49,7 @@ export default function VehicleRegistry() {
     try {
       await vehicleAPI.update(vehicle.id, { status: "Retired" });
       await loadVehicles();
-    } catch (error) {
+    } catch {
       alert("Error retiring vehicle");
     }
   }

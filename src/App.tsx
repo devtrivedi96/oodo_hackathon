@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { AppView, canRoleAccessView, getAllowedViewsForRole } from "./lib/access";
 
 import Login from "./components/Auth/Login";
 import Register from "./components/Auth/Register";
@@ -16,11 +17,39 @@ import ExpenseTracking from "./components/Expenses/ExpenseTracking";
 import Analytics from "./components/Analytics/Analytics";
 
 function ProtectedLayout() {
-  const { user, loading } = useAuth();
-  const [currentView, setCurrentView] = useState("dashboard");
+  const { user, profile, loading } = useAuth();
+  const [currentView, setCurrentView] = useState<AppView>("dashboard");
+  const allowedViews = useMemo(
+    () => (profile ? getAllowedViewsForRole(profile.role) : []),
+    [profile],
+  );
+
+  useEffect(() => {
+    if (!profile) return;
+    if (!allowedViews.includes(currentView)) {
+      setCurrentView(allowedViews[0] || "dashboard");
+    }
+  }, [allowedViews, currentView, profile]);
 
   if (loading) return <div>Loading...</div>;
   if (!user) return <Navigate to="/login" />;
+  if (!profile) return <div className="p-6 text-slate-600">Loading profile...</div>;
+
+  if (!canRoleAccessView(profile.role, currentView)) {
+    return (
+      <div className="min-h-screen bg-slate-50 lg:ml-64">
+        <Sidebar currentView={currentView} onViewChange={setCurrentView} />
+        <main className="p-6 sm:p-8">
+          <div className="bg-white border border-slate-200 rounded-xl p-6 max-w-xl">
+            <h2 className="text-xl font-semibold text-slate-800">Access Denied</h2>
+            <p className="text-slate-600 mt-2">
+              You do not have permission to access this feature with the current role.
+            </p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 lg:ml-64">

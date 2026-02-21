@@ -44,7 +44,7 @@ export default function DriverManagement() {
     try {
       await driverAPI.delete(id);
       await loadDrivers();
-    } catch (error) {
+    } catch {
       alert("Error deleting driver. They may be assigned to trips.");
     }
   }

@@ -202,19 +202,16 @@ export const authAPI = {
   },
 
   // Protected Route
-  async getProfile() {
-    const { data } = await api.get("/auth/me");
+  async getProfile(): Promise<Profile> {
+    const { data } = await api.get<{ user: Profile }>("/auth/me");
     return data.user;
+  },
+
   async forgotPassword(email: string, newPassword: string): Promise<void> {
     await api.post("/auth/forgot-password", {
       email,
       new_password: newPassword,
     });
-  },
-
-  async getProfile(): Promise<Profile> {
-    const { data } = await api.get<Profile>("/auth/profile");
-    return data;
   },
 };
 

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   tripAPI,
   vehicleAPI,
@@ -51,31 +51,11 @@ export default function TripForm({ trip, onClose, onSuccess }: TripFormProps) {
     }
   }, [trip]);
 
-  useEffect(() => {
-    validateForm();
-  }, [formData, vehicles, drivers]);
-
-  async function loadVehiclesAndDrivers() {
-    try {
-      const [vehiclesData, driversData] = await Promise.all([
-        vehicleAPI.getAll(),
-        driverAPI.getAll(),
-      ]);
-
-      setVehicles(vehiclesData);
-      setDrivers(driversData);
-    } catch (error) {
-      console.error("Error loading data:", error);
-    }
-  }
-
-  function validateForm() {
+  const validateForm = useCallback(() => {
     const newWarnings: string[] = [];
 
     if (formData.vehicle_id && formData.cargo_weight) {
-      const selectedVehicle = vehicles.find(
-        (v) => v.id === formData.vehicle_id,
-      );
+      const selectedVehicle = vehicles.find((v) => v.id === formData.vehicle_id);
       if (selectedVehicle) {
         const cargoWeight = parseFloat(formData.cargo_weight);
         if (cargoWeight > selectedVehicle.max_load_capacity) {
@@ -109,6 +89,24 @@ export default function TripForm({ trip, onClose, onSuccess }: TripFormProps) {
     }
 
     setWarnings(newWarnings);
+  }, [drivers, formData, vehicles]);
+
+  useEffect(() => {
+    validateForm();
+  }, [validateForm]);
+
+  async function loadVehiclesAndDrivers() {
+    try {
+      const [vehiclesData, driversData] = await Promise.all([
+        vehicleAPI.getAll(),
+        driverAPI.getAll(),
+      ]);
+
+      setVehicles(vehiclesData);
+      setDrivers(driversData);
+    } catch (error) {
+      console.error("Error loading data:", error);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -170,14 +168,15 @@ export default function TripForm({ trip, onClose, onSuccess }: TripFormProps) {
       };
 
       if (trip) {
-        const {
-          status,
-          created_by,
-          actual_distance,
-          dispatched_at,
-          completed_at,
-          ...updateData
-        } = data;
+        const updateData = {
+          vehicle_id: data.vehicle_id,
+          driver_id: data.driver_id,
+          cargo_weight: data.cargo_weight,
+          origin: data.origin,
+          destination: data.destination,
+          estimated_distance: data.estimated_distance,
+          revenue: data.revenue,
+        };
         await tripAPI.update(trip.id, updateData);
       } else {
         await tripAPI.create(data);

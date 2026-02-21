@@ -12,7 +12,7 @@ export const sendOTPEmail = async (to, userName, otp) => {
       "https://api.brevo.com/v3/smtp/email",
       {
         sender: {
-          name: "Auth System",
+          name: "FleetFlow",
           email: process.env.EMAIL,
         },
         to: [
@@ -87,7 +87,7 @@ export const sendOTPEmail = async (to, userName, otp) => {
             <td style="padding-top:30px; font-size:13px; color:#7f8c8d; text-align:center;">
               If you did not request this code, please ignore this email.
               <br/><br/>
-              © ${new Date().getFullYear()} Your Company Name. All rights reserved.
+              © ${new Date().getFullYear()} All rights reserved.
             </td>
           </tr>
 

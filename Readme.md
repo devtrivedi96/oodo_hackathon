@@ -152,6 +152,28 @@ FleetFlow is not just a CRUD system — it is a rule-enforced operational engine
 
 ---
 
+## 🗺️ System Architecture Diagram
+
+The following diagram illustrates the high-level architecture of FleetFlow, showing the interaction between the frontend, backend, and database layers:
+
+![FleetFlow Architectural Diagram](assets/architecturaldia.jpeg)
+
+**Description:**
+The architecture is designed for modularity and scalability. The frontend communicates with the backend via secure APIs, while the backend enforces business logic and interacts with a relational database. This separation ensures robust validation, real-time updates, and maintainability.
+
+---
+
+## 🔁 Program Flow Diagram
+
+The following diagram demonstrates the typical program flow within FleetFlow, from user actions to system responses:
+
+![FleetFlow Program Flow](assets/programflow.jpeg)
+
+**Description:**
+This flow diagram outlines the sequence of operations, such as vehicle and driver registration, trip dispatch, compliance checks, and analytics updates. Each step is validated by the system to ensure business rules are enforced, resulting in automated state transitions and real-time data integrity.
+
+---
+
 ## 📊 Impact
 
 FleetFlow transforms manual fleet management into a structured, intelligent, and data-driven system that improves:
@@ -168,4 +190,3 @@ FleetFlow transforms manual fleet management into a structured, intelligent, and
 To build a scalable logistics management platform that can evolve into a full ERP-grade fleet intelligence system.
 
 ---
-

@@ -1,7 +1,7 @@
 import axios, { AxiosInstance } from "axios";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
 // Initialize API client
 const api: AxiosInstance = axios.create({
@@ -100,7 +100,12 @@ export interface Expense {
 
 export interface AuthResponse {
   token: string;
-  user: Profile;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    role: UserRole;
+  };
 }
 
 export interface AuthUser {
@@ -108,40 +113,63 @@ export interface AuthUser {
   email: string;
 }
 
-// Authentication API
+// ================= AUTH API =================
+
 export const authAPI = {
+  // Register (Send OTP)
   async signUp(
     email: string,
     password: string,
     fullName: string,
     role: UserRole,
-  ): Promise<AuthResponse> {
-    const { data } = await api.post<AuthResponse>("/auth/signup", {
+  ) {
+    const { data } = await api.post("/auth/register", {
+      name: fullName,
       email,
       password,
-      full_name: fullName,
       role,
     });
-    localStorage.setItem("auth_token", data.token);
+
+    // Backend only sends message + email
     return data;
   },
 
+  // Verify OTP
+  async verifyOTP(email: string, otp: string) {
+    const { data } = await api.post("/auth/verify-otp", {
+      email,
+      otp,
+    });
+
+    return data;
+  },
+
+  // Login (After OTP verified)
   async signIn(email: string, password: string): Promise<AuthResponse> {
-    const { data } = await api.post<AuthResponse>("/auth/signin", {
+    const { data } = await api.post<AuthResponse>("/auth/login", {
       email,
       password,
     });
+
+    // Store token + user info
     localStorage.setItem("auth_token", data.token);
+    localStorage.setItem("user_id", data.user.id);
+    localStorage.setItem("user_email", data.user.email);
+    localStorage.setItem("user_role", data.user.role);
+
     return data;
   },
 
-  async signOut(): Promise<void> {
+  async signOut() {
     localStorage.removeItem("auth_token");
+    localStorage.removeItem("user_id");
+    localStorage.removeItem("user_email");
   },
 
-  async getProfile(userId?: string): Promise<Profile> {
-    const { data } = await api.get<Profile>("/auth/profile");
-    return data;
+  // Protected Route
+  async getProfile() {
+    const { data } = await api.get("/auth/me");
+    return data.user;
   },
 };
 

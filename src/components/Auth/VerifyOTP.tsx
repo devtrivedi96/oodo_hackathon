@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { useLocation, useNavigate } from "react-router-dom";
+import { authAPI } from "../../lib/db";
 
-export default function Login() {
+export default function VerifyOTP() {
+  const location = useLocation();
   const navigate = useNavigate();
-  const { signIn } = useAuth();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const email = location.state?.email || "";
+
+  const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -17,10 +18,11 @@ export default function Login() {
     setLoading(true);
 
     try {
-      await signIn(email, password);
-      navigate("/");   // go to dashboard (ProtectedLayout)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to sign in");
+      await authAPI.verifyOTP(email, otp);
+      alert("Email verified successfully!");
+      navigate("/login");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Invalid OTP");
     } finally {
       setLoading(false);
     }
@@ -31,38 +33,24 @@ export default function Login() {
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-slate-800 mb-2">
-            FleetFlow
+            Verify Email
           </h1>
           <p className="text-slate-600">
-            Fleet & Logistics Management
+            Enter OTP sent to {email}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
-              Email Address
+              Enter OTP
             </label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
               className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
-              placeholder="you@company.com"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 rounded-lg border border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
-              placeholder="••••••••"
+              placeholder="6-digit OTP"
               required
             />
           </div>
@@ -78,18 +66,9 @@ export default function Login() {
             disabled={loading}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? "Signing in..." : "Sign In"}
+            {loading ? "Verifying..." : "Verify OTP"}
           </button>
         </form>
-
-        <div className="mt-6 text-center">
-          <button
-            onClick={() => navigate("/register")}
-            className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-          >
-            Don't have an account? Sign up
-          </button>
-        </div>
       </div>
     </div>
   );

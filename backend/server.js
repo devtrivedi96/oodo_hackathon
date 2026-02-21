@@ -10,10 +10,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+import authRoutes from "./server/routes/authRoutes.js";
 
 // Middleware
 app.use(express.json());
 app.use(cors());
+app.use("/api/auth", authRoutes);
 
 // Helper function to convert ISO timestamp to MySQL DATETIME format
 const formatMySQLDateTime = (isoString) => {

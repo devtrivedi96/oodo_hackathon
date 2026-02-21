@@ -1,7 +1,11 @@
 import { useState } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
+
 import Login from "./components/Auth/Login";
 import Register from "./components/Auth/Register";
+import VerifyOTP from "./components/Auth/VerifyOTP";
+
 import Sidebar from "./components/Layout/Sidebar";
 import Dashboard from "./components/Dashboard/Dashboard";
 import VehicleRegistry from "./components/Vehicles/VehicleRegistry";
@@ -11,26 +15,12 @@ import MaintenanceLogs from "./components/Maintenance/MaintenanceLogs";
 import ExpenseTracking from "./components/Expenses/ExpenseTracking";
 import Analytics from "./components/Analytics/Analytics";
 
-function AppContent() {
+function ProtectedLayout() {
   const { user, loading } = useAuth();
-  const [showRegister, setShowRegister] = useState(false);
   const [currentView, setCurrentView] = useState("dashboard");
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-slate-100 flex items-center justify-center">
-        <div className="text-slate-600 text-lg">Loading...</div>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return showRegister ? (
-      <Register onToggle={() => setShowRegister(false)} />
-    ) : (
-      <Login onToggle={() => setShowRegister(true)} />
-    );
-  }
+  if (loading) return <div>Loading...</div>;
+  if (!user) return <Navigate to="/login" />;
 
   return (
     <div className="min-h-screen bg-slate-50 lg:ml-64">
@@ -51,7 +41,12 @@ function AppContent() {
 function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/verify-otp" element={<VerifyOTP />} />
+        <Route path="/*" element={<ProtectedLayout />} />
+      </Routes>
     </AuthProvider>
   );
 }

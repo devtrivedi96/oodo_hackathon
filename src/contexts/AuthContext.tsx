@@ -52,11 +52,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function signIn(email: string, password: string) {
     try {
       const { token, user: userData } = await authAPI.signIn(email, password);
+
       localStorage.setItem("auth_token", token);
       localStorage.setItem("user_id", userData.id);
       localStorage.setItem("user_email", userData.email);
+
       setUser({ id: userData.id, email: userData.email });
-      await loadProfile();
+
+      // SET PROFILE DIRECTLY
+      setProfile({
+        id: userData.id,
+        email: userData.email,
+        full_name: userData.name,
+        role: userData.role,
+        created_at: new Date().toISOString()
+      });
+
     } catch (error) {
       console.error("Sign in error:", error);
       throw error;
@@ -70,17 +81,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     role: UserRole,
   ) {
     try {
-      const { token, user: userData } = await authAPI.signUp(
-        email,
-        password,
-        fullName,
-        role,
-      );
-      localStorage.setItem("auth_token", token);
-      localStorage.setItem("user_id", userData.id);
-      localStorage.setItem("user_email", userData.email);
-      setUser({ id: userData.id, email: userData.email });
-      setProfile(userData);
+      // Just send registration request
+      await authAPI.signUp(email, password, fullName, role);
+
+      // Do NOT store token
+      // Do NOT set user
+      // Do NOT set profile
+      // Registration only sends OTP
+
     } catch (error) {
       console.error("Sign up error:", error);
       throw error;

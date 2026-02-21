@@ -6,6 +6,7 @@ import {
   IndianRupee,
   Fuel,
   Wrench,
+  RefreshCw,
 } from "lucide-react";
 
 const toFiniteNumber = (value: unknown) => {
@@ -21,6 +22,8 @@ const formatINR = (value: unknown) =>
 
 export default function Analytics() {
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [analytics, setAnalytics] = useState({
     fuelEfficiency: 0,
     totalRevenue: 0,
@@ -39,6 +42,7 @@ export default function Analytics() {
 
   async function loadAnalytics() {
     try {
+      setRefreshing(true);
       const [vehiclesData, tripsData, expensesData, maintenanceData] =
         await Promise.all([
           vehicleAPI.getAll(),
@@ -96,10 +100,12 @@ export default function Analytics() {
         completedTrips: completedTrips.length,
         activeVehicles,
       });
+      setLastUpdated(new Date().toLocaleString());
     } catch (error) {
       console.error("Error loading analytics:", error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }
 
@@ -113,11 +119,32 @@ export default function Analytics() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">
-          Analytics & Reports
-        </h1>
-        <p className="text-slate-600 mt-1">Performance metrics and insights</p>
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">
+              Analytics & Reports
+            </h1>
+            <p className="text-slate-600 mt-1">
+              Performance metrics and financial insights
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <p className="text-xs text-slate-500">
+              Last updated: {lastUpdated || "Just now"}
+            </p>
+            <button
+              onClick={loadAnalytics}
+              disabled={refreshing}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:opacity-60"
+            >
+              <RefreshCw
+                className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+              />
+              Refresh
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

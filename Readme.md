@@ -11,7 +11,7 @@
 **Members:**
 
 - Dev Panchal
-- Ajay Anchal
+- Ajay Panchal
 - Jenish Solanki
 
 ---
@@ -168,3 +168,4 @@ FleetFlow transforms manual fleet management into a structured, intelligent, and
 To build a scalable logistics management platform that can evolve into a full ERP-grade fleet intelligence system.
 
 ---
+

@@ -16,18 +16,22 @@ interface ExpenseWithDetails extends Expense {
 }
 
 const DEFAULT_USD_TO_INR = Number(import.meta.env.VITE_USD_TO_INR) || 83;
-type Currency = "USD" | "INR";
 
 const parseNonNegative = (value: string) => {
   const parsed = Number.parseFloat(value);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : DEFAULT_USD_TO_INR;
 };
 
+const toFiniteNumber = (value: unknown) => {
+  const parsed =
+    typeof value === "number" ? value : Number.parseFloat(String(value));
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
 export default function ExpenseTracking() {
   const [expenses, setExpenses] = useState<ExpenseWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [displayCurrency, setDisplayCurrency] = useState<Currency>("USD");
   const [usdToInrRate, setUsdToInrRate] = useState(
     DEFAULT_USD_TO_INR.toString(),
   );
@@ -92,8 +96,8 @@ export default function ExpenseTracking() {
 
   const exchangeRate = Math.max(parseNonNegative(usdToInrRate), 1);
   const toDisplayAmount = (amountUSD: number) =>
-    displayCurrency === "USD" ? amountUSD : amountUSD * exchangeRate;
-  const currencySymbol = displayCurrency === "USD" ? "$" : "₹";
+    toFiniteNumber(amountUSD) * exchangeRate;
+  const currencySymbol = "₹";
   const formatMoney = (amountUSD: number) =>
     `${currencySymbol}${toDisplayAmount(amountUSD).toLocaleString(undefined, {
       maximumFractionDigits: 2,
@@ -109,7 +113,7 @@ export default function ExpenseTracking() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">
             Expense Tracking
@@ -120,7 +124,7 @@ export default function ExpenseTracking() {
         </div>
         <button
           onClick={() => setShowForm(true)}
-          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition"
+          className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition"
         >
           <Plus className="h-4 w-4" />
           <span>Log Expense</span>
@@ -128,19 +132,6 @@ export default function ExpenseTracking() {
       </div>
 
       <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm flex flex-col md:flex-row gap-4 md:items-end">
-        <div>
-          <label className="block text-xs font-medium text-slate-600 uppercase mb-1">
-            Display Currency
-          </label>
-          <select
-            value={displayCurrency}
-            onChange={(e) => setDisplayCurrency(e.target.value as Currency)}
-            className="px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none bg-white"
-          >
-            <option value="USD">USD ($)</option>
-            <option value="INR">INR (₹)</option>
-          </select>
-        </div>
         <div>
           <label className="block text-xs font-medium text-slate-600 uppercase mb-1">
             USD to INR Rate
@@ -189,7 +180,7 @@ export default function ExpenseTracking() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[1050px]">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="text-left py-3 px-6 text-xs font-medium text-slate-600 uppercase">

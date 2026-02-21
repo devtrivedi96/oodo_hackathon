@@ -175,7 +175,7 @@ export default function TripDispatcher() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Trip Dispatcher</h1>
           <p className="text-slate-600 mt-1">
@@ -185,7 +185,7 @@ export default function TripDispatcher() {
         {canCreateTrips && (
           <button
             onClick={handleAdd}
-            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition"
+            className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition"
           >
             <Plus className="h-4 w-4" />
             <span>Create Trip</span>
@@ -215,7 +215,7 @@ export default function TripDispatcher() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[1100px]">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="text-left py-3 px-6 text-xs font-medium text-slate-600 uppercase">

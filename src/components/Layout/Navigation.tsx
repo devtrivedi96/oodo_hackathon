@@ -1,5 +1,5 @@
 import { useAuth } from '../../contexts/AuthContext';
-import { LayoutDashboard, Truck, Users, Route, Wrench, DollarSign, BarChart3, LogOut } from 'lucide-react';
+import { LayoutDashboard, Truck, Users, Route, Wrench, IndianRupee, BarChart3, LogOut } from 'lucide-react';
 
 interface NavigationProps {
   currentView: string;
@@ -15,7 +15,7 @@ export default function Navigation({ currentView, onViewChange }: NavigationProp
     { id: 'drivers', label: 'Drivers', icon: Users, roles: ['Manager', 'Dispatcher', 'Safety Officer', 'Analyst'] },
     { id: 'trips', label: 'Trips', icon: Route, roles: ['Manager', 'Dispatcher', 'Analyst'] },
     { id: 'maintenance', label: 'Maintenance', icon: Wrench, roles: ['Manager', 'Analyst'] },
-    { id: 'expenses', label: 'Expenses', icon: DollarSign, roles: ['Manager', 'Analyst'] },
+    { id: 'expenses', label: 'Expenses', icon: IndianRupee, roles: ['Manager', 'Analyst'] },
     { id: 'analytics', label: 'Analytics', icon: BarChart3, roles: ['Manager', 'Analyst'] },
   ];
 

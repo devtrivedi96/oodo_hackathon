@@ -6,7 +6,7 @@ import {
   Users,
   Route,
   Wrench,
-  DollarSign,
+  IndianRupee,
   BarChart3,
   LogOut,
   Menu,
@@ -56,7 +56,7 @@ export default function Sidebar({ currentView, onViewChange }: SidebarProps) {
     {
       id: "expenses",
       label: "Expenses",
-      icon: DollarSign,
+      icon: IndianRupee,
       roles: ["Manager", "Analyst"],
     },
     {

@@ -3,10 +3,21 @@ import { vehicleAPI, tripAPI, expenseAPI, maintenanceAPI } from "../../lib/db";
 import {
   TrendingUp,
   TrendingDown,
-  DollarSign,
+  IndianRupee,
   Fuel,
   Wrench,
 } from "lucide-react";
+
+const toFiniteNumber = (value: unknown) => {
+  const parsed =
+    typeof value === "number" ? value : Number.parseFloat(String(value));
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const formatINR = (value: unknown) =>
+  `₹${toFiniteNumber(value).toLocaleString(undefined, {
+    maximumFractionDigits: 2,
+  })}`;
 
 export default function Analytics() {
   const [loading, setLoading] = useState(true);
@@ -38,26 +49,26 @@ export default function Analytics() {
 
       const completedTrips = tripsData.filter((t) => t.status === "Completed");
       const totalDistance = completedTrips.reduce(
-        (sum, t) => sum + (t.actual_distance || 0),
+        (sum, t) => sum + toFiniteNumber(t.actual_distance),
         0,
       );
       const totalFuelLiters = expensesData.reduce(
-        (sum, e) => sum + e.fuel_liters,
+        (sum, e) => sum + toFiniteNumber(e.fuel_liters),
         0,
       );
       const fuelEfficiency =
         totalFuelLiters > 0 ? totalDistance / totalFuelLiters : 0;
 
       const totalFuelCost = expensesData.reduce(
-        (sum, e) => sum + e.fuel_cost,
+        (sum, e) => sum + toFiniteNumber(e.fuel_cost),
         0,
       );
       const totalMiscCost = expensesData.reduce(
-        (sum, e) => sum + e.misc_cost,
+        (sum, e) => sum + toFiniteNumber(e.misc_cost),
         0,
       );
       const totalMaintenanceCost = maintenanceData.reduce(
-        (sum, m) => sum + m.cost,
+        (sum, m) => sum + toFiniteNumber(m.cost),
         0,
       );
       const totalExpenses =
@@ -133,7 +144,7 @@ export default function Analytics() {
                 Total Revenue
               </p>
               <p className="text-3xl font-bold text-slate-800 mt-2">
-                ${analytics.totalRevenue.toLocaleString()}
+                {formatINR(analytics.totalRevenue)}
               </p>
               <p className="text-xs text-slate-500 mt-1">Estimated</p>
             </div>
@@ -150,7 +161,7 @@ export default function Analytics() {
                 Total Expenses
               </p>
               <p className="text-3xl font-bold text-slate-800 mt-2">
-                ${analytics.totalExpenses.toLocaleString()}
+                {formatINR(analytics.totalExpenses)}
               </p>
             </div>
             <div className="bg-red-100 p-3 rounded-lg">
@@ -166,11 +177,11 @@ export default function Analytics() {
               <p
                 className={`text-3xl font-bold mt-2 ${analytics.netProfit >= 0 ? "text-green-600" : "text-red-600"}`}
               >
-                ${analytics.netProfit.toLocaleString()}
+                {formatINR(analytics.netProfit)}
               </p>
             </div>
             <div className="bg-slate-100 p-3 rounded-lg">
-              <DollarSign className="h-6 w-6 text-slate-600" />
+              <IndianRupee className="h-6 w-6 text-slate-600" />
             </div>
           </div>
         </div>
@@ -182,7 +193,7 @@ export default function Analytics() {
                 Maintenance Cost
               </p>
               <p className="text-3xl font-bold text-slate-800 mt-2">
-                ${analytics.maintenanceCost.toLocaleString()}
+                {formatINR(analytics.maintenanceCost)}
               </p>
             </div>
             <div className="bg-orange-100 p-3 rounded-lg">
@@ -196,7 +207,7 @@ export default function Analytics() {
             <div>
               <p className="text-sm font-medium text-slate-600">Fuel Cost</p>
               <p className="text-3xl font-bold text-slate-800 mt-2">
-                ${analytics.fuelCost.toLocaleString()}
+                {formatINR(analytics.fuelCost)}
               </p>
             </div>
             <div className="bg-slate-100 p-3 rounded-lg">
@@ -245,7 +256,7 @@ export default function Analytics() {
           <div className="flex items-center justify-between">
             <span className="text-sm text-blue-800">Fuel Costs</span>
             <span className="text-sm font-medium text-blue-900">
-              ${analytics.fuelCost.toLocaleString()} (
+              {formatINR(analytics.fuelCost)} (
               {analytics.totalExpenses > 0
                 ? (
                     (analytics.fuelCost / analytics.totalExpenses) *
@@ -258,7 +269,7 @@ export default function Analytics() {
           <div className="flex items-center justify-between">
             <span className="text-sm text-blue-800">Maintenance Costs</span>
             <span className="text-sm font-medium text-blue-900">
-              ${analytics.maintenanceCost.toLocaleString()} (
+              {formatINR(analytics.maintenanceCost)} (
               {analytics.totalExpenses > 0
                 ? (
                     (analytics.maintenanceCost / analytics.totalExpenses) *

@@ -8,7 +8,6 @@ interface ExpenseFormProps {
 }
 
 const DEFAULT_USD_TO_INR = Number(import.meta.env.VITE_USD_TO_INR) || 83;
-type Currency = "USD" | "INR";
 
 const parseNonNegative = (value: string) => {
   const parsed = Number.parseFloat(value);
@@ -20,7 +19,6 @@ const roundToTwo = (value: number) => Math.round((value + Number.EPSILON) * 100)
 export default function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [trips, setTrips] = useState<Trip[]>([]);
-  const [currency, setCurrency] = useState<Currency>("USD");
   const [usdToInrRate, setUsdToInrRate] = useState(
     DEFAULT_USD_TO_INR.toString(),
   );
@@ -76,13 +74,39 @@ export default function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
     const fuelLiters = parseNonNegative(formData.fuel_liters);
     const fuelPricePerLiter = parseNonNegative(formData.fuel_price_per_liter);
     const fuelCostInInputCurrency = fuelLiters * fuelPricePerLiter;
-    const fuelCostUSD =
-      currency === "USD"
-        ? fuelCostInInputCurrency
-        : fuelCostInInputCurrency / exchangeRate;
+    const fuelCostUSD = fuelCostInInputCurrency / exchangeRate;
     const miscCostInput = parseNonNegative(formData.misc_cost);
-    const miscCostUSD =
-      currency === "USD" ? miscCostInput : miscCostInput / exchangeRate;
+    const miscCostUSD = miscCostInput / exchangeRate;
+
+    if (!formData.vehicle_id) {
+      setError("Please select a vehicle.");
+      setLoading(false);
+      return;
+    }
+
+    if (!Number.isFinite(exchangeRate) || exchangeRate <= 0) {
+      setError("Please enter a valid USD to INR rate greater than 0.");
+      setLoading(false);
+      return;
+    }
+
+    if (fuelLiters > 0 && fuelPricePerLiter <= 0) {
+      setError("Enter fuel price per liter when fuel liters is greater than 0.");
+      setLoading(false);
+      return;
+    }
+
+    if (fuelPricePerLiter > 0 && fuelLiters <= 0) {
+      setError("Enter fuel liters when fuel price per liter is provided.");
+      setLoading(false);
+      return;
+    }
+
+    if (fuelCostInInputCurrency <= 0 && miscCostInput <= 0) {
+      setError("Enter at least one expense amount.");
+      setLoading(false);
+      return;
+    }
 
     try {
       await expenseAPI.create({
@@ -107,14 +131,10 @@ export default function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
   const fuelLiters = parseNonNegative(formData.fuel_liters);
   const fuelPricePerLiter = parseNonNegative(formData.fuel_price_per_liter);
   const fuelCostInInputCurrency = fuelLiters * fuelPricePerLiter;
-  const fuelCostUSD =
-    currency === "USD"
-      ? fuelCostInInputCurrency
-      : fuelCostInInputCurrency / exchangeRate;
+  const fuelCostUSD = fuelCostInInputCurrency / exchangeRate;
   const fuelCostINR = fuelCostUSD * exchangeRate;
   const miscCostInput = parseNonNegative(formData.misc_cost);
-  const miscCostUSD =
-    currency === "USD" ? miscCostInput : miscCostInput / exchangeRate;
+  const miscCostUSD = miscCostInput / exchangeRate;
   const miscCostINR = miscCostUSD * exchangeRate;
 
   return (
@@ -132,20 +152,6 @@ export default function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Input Currency
-              </label>
-              <select
-                value={currency}
-                onChange={(e) => setCurrency(e.target.value as Currency)}
-                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none bg-white"
-              >
-                <option value="USD">USD ($)</option>
-                <option value="INR">INR (₹)</option>
-              </select>
-            </div>
-
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 USD to INR Rate
@@ -225,7 +231,7 @@ export default function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Fuel Price Per Liter ({currency})
+                Fuel Price Per Liter (INR)
               </label>
               <input
                 type="number"
@@ -237,7 +243,7 @@ export default function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
                   })
                 }
                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none"
-                placeholder={currency === "USD" ? "e.g., 3.9" : "e.g., 95"}
+                placeholder="e.g., 95"
                 min="0"
                 step="0.01"
               />
@@ -251,7 +257,7 @@ export default function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
                 type="text"
                 value={
                   fuelCostInInputCurrency > 0
-                    ? `${currency === "USD" ? "$" : "₹"}${fuelCostInInputCurrency.toFixed(2)}`
+                    ? `₹${fuelCostInInputCurrency.toFixed(2)}`
                     : ""
                 }
                 readOnly
@@ -259,13 +265,13 @@ export default function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
                 placeholder="Auto-calculated from liters"
               />
               <p className="text-xs text-slate-500 mt-1">
-                Stored as ${fuelCostUSD.toFixed(2)} (₹{fuelCostINR.toFixed(2)})
+                Stored as USD {fuelCostUSD.toFixed(2)} (₹{fuelCostINR.toFixed(2)})
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
-                Miscellaneous Cost ({currency})
+                Miscellaneous Cost (INR)
               </label>
               <input
                 type="number"
@@ -279,7 +285,7 @@ export default function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
                 step="0.01"
               />
               <p className="text-xs text-slate-500 mt-1">
-                Stored as ${miscCostUSD.toFixed(2)} (₹{miscCostINR.toFixed(2)})
+                Stored as USD {miscCostUSD.toFixed(2)} (₹{miscCostINR.toFixed(2)})
               </p>
             </div>
 

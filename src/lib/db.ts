@@ -108,6 +108,39 @@ export interface AuthUser {
   email: string;
 }
 
+const toNumber = (value: unknown, fallback = 0): number => {
+  const parsed =
+    typeof value === "number" ? value : Number.parseFloat(String(value));
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const normalizeVehicle = (vehicle: Vehicle): Vehicle => ({
+  ...vehicle,
+  max_load_capacity: toNumber(vehicle.max_load_capacity),
+  odometer: toNumber(vehicle.odometer),
+  acquisition_cost: toNumber(vehicle.acquisition_cost),
+});
+
+const normalizeTrip = (trip: Trip): Trip => ({
+  ...trip,
+  cargo_weight: toNumber(trip.cargo_weight),
+  estimated_distance: toNumber(trip.estimated_distance),
+  actual_distance:
+    trip.actual_distance === null ? null : toNumber(trip.actual_distance),
+});
+
+const normalizeMaintenance = (log: MaintenanceLog): MaintenanceLog => ({
+  ...log,
+  cost: toNumber(log.cost),
+});
+
+const normalizeExpense = (expense: Expense): Expense => ({
+  ...expense,
+  fuel_liters: toNumber(expense.fuel_liters),
+  fuel_cost: toNumber(expense.fuel_cost),
+  misc_cost: toNumber(expense.misc_cost),
+});
+
 // Authentication API
 export const authAPI = {
   async signUp(
@@ -149,24 +182,24 @@ export const authAPI = {
 export const vehicleAPI = {
   async getAll(): Promise<Vehicle[]> {
     const { data } = await api.get<Vehicle[]>("/vehicles");
-    return data;
+    return data.map(normalizeVehicle);
   },
 
   async getById(id: string): Promise<Vehicle> {
     const { data } = await api.get<Vehicle>(`/vehicles/${id}`);
-    return data;
+    return normalizeVehicle(data);
   },
 
   async create(
     vehicle: Omit<Vehicle, "id" | "created_at" | "updated_at">,
   ): Promise<Vehicle> {
     const { data } = await api.post<Vehicle>("/vehicles", vehicle);
-    return data;
+    return normalizeVehicle(data);
   },
 
   async update(id: string, vehicle: Partial<Vehicle>): Promise<Vehicle> {
     const { data } = await api.put<Vehicle>(`/vehicles/${id}`, vehicle);
-    return data;
+    return normalizeVehicle(data);
   },
 
   async delete(id: string): Promise<void> {
@@ -207,24 +240,24 @@ export const driverAPI = {
 export const tripAPI = {
   async getAll(): Promise<Trip[]> {
     const { data } = await api.get<Trip[]>("/trips");
-    return data;
+    return data.map(normalizeTrip);
   },
 
   async getById(id: string): Promise<Trip> {
     const { data } = await api.get<Trip>(`/trips/${id}`);
-    return data;
+    return normalizeTrip(data);
   },
 
   async create(
     trip: Omit<Trip, "id" | "created_at" | "updated_at">,
   ): Promise<Trip> {
     const { data } = await api.post<Trip>("/trips", trip);
-    return data;
+    return normalizeTrip(data);
   },
 
   async update(id: string, trip: Partial<Trip>): Promise<Trip> {
     const { data } = await api.put<Trip>(`/trips/${id}`, trip);
-    return data;
+    return normalizeTrip(data);
   },
 
   async delete(id: string): Promise<void> {
@@ -236,26 +269,26 @@ export const tripAPI = {
 export const maintenanceAPI = {
   async getAll(): Promise<MaintenanceLog[]> {
     const { data } = await api.get<MaintenanceLog[]>("/maintenance");
-    return data;
+    return data.map(normalizeMaintenance);
   },
 
   async getByVehicle(vehicleId: string): Promise<MaintenanceLog[]> {
     const { data } = await api.get<MaintenanceLog[]>(
       `/maintenance/vehicle/${vehicleId}`,
     );
-    return data;
+    return data.map(normalizeMaintenance);
   },
 
   async getById(id: string): Promise<MaintenanceLog> {
     const { data } = await api.get<MaintenanceLog>(`/maintenance/${id}`);
-    return data;
+    return normalizeMaintenance(data);
   },
 
   async create(
     log: Omit<MaintenanceLog, "id" | "created_at" | "updated_at">,
   ): Promise<MaintenanceLog> {
     const { data } = await api.post<MaintenanceLog>("/maintenance", log);
-    return data;
+    return normalizeMaintenance(data);
   },
 
   async update(
@@ -263,7 +296,7 @@ export const maintenanceAPI = {
     log: Partial<MaintenanceLog>,
   ): Promise<MaintenanceLog> {
     const { data } = await api.put<MaintenanceLog>(`/maintenance/${id}`, log);
-    return data;
+    return normalizeMaintenance(data);
   },
 
   async delete(id: string): Promise<void> {
@@ -275,32 +308,32 @@ export const maintenanceAPI = {
 export const expenseAPI = {
   async getAll(): Promise<Expense[]> {
     const { data } = await api.get<Expense[]>("/expenses");
-    return data;
+    return data.map(normalizeExpense);
   },
 
   async getByVehicle(vehicleId: string): Promise<Expense[]> {
     const { data } = await api.get<Expense[]>(`/expenses/vehicle/${vehicleId}`);
-    return data;
+    return data.map(normalizeExpense);
   },
 
   async getByTrip(tripId: string): Promise<Expense[]> {
     const { data } = await api.get<Expense[]>(`/expenses/trip/${tripId}`);
-    return data;
+    return data.map(normalizeExpense);
   },
 
   async getById(id: string): Promise<Expense> {
     const { data } = await api.get<Expense>(`/expenses/${id}`);
-    return data;
+    return normalizeExpense(data);
   },
 
   async create(expense: Omit<Expense, "id" | "created_at">): Promise<Expense> {
     const { data } = await api.post<Expense>("/expenses", expense);
-    return data;
+    return normalizeExpense(data);
   },
 
   async update(id: string, expense: Partial<Expense>): Promise<Expense> {
     const { data } = await api.put<Expense>(`/expenses/${id}`, expense);
-    return data;
+    return normalizeExpense(data);
   },
 
   async delete(id: string): Promise<void> {

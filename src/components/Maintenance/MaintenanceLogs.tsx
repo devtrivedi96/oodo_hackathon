@@ -165,7 +165,7 @@ export default function MaintenanceLogs() {
                       {log.service_type}
                     </td>
                     <td className="py-4 px-6 text-sm text-slate-600">
-                      ${log.cost.toLocaleString()}
+                      ₹{log.cost.toLocaleString()}
                     </td>
                     <td className="py-4 px-6">
                       <span

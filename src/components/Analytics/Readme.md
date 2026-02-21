@@ -1,6 +1,8 @@
 # Analytics Component
 
-Provides operational analytics and financial reports for the fleet management system.
+![Analytics Dashboard](../../../assets/analytics.png)
+
+This image shows the Analytics Dashboard, visualizing key metrics such as fuel efficiency, vehicle ROI, and cost-per-km. Charts and tables provide actionable insights for fleet managers and analysts, enabling data-driven decisions. Export options for CSV/PDF are visible, supporting payroll and audit workflows.
 
 - **Purpose:**
   - Visualize key metrics such as fuel efficiency, vehicle ROI, and cost-per-km.

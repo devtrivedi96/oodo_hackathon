@@ -2,7 +2,7 @@
 
 ![Sign In Screen](../../../assets/signin.png)
 ![Register Screen](../../../assets/register.png)
-![OTP Verification](../../../assets/otpverification.png)
+![OTP Verification](../../../assets/otpverification.jpeg)
 
 These images illustrate the authentication flow: sign-in for secure access, registration for onboarding new users, and OTP verification for email validation. Each screen enforces role-based access control, ensuring only authorized users can access system features.
 

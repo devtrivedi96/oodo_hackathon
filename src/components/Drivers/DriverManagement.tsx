@@ -101,7 +101,7 @@ export default function DriverManagement() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">
             Driver Management
@@ -112,7 +112,7 @@ export default function DriverManagement() {
         </div>
         <button
           onClick={handleAdd}
-          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition"
+          className="w-full sm:w-auto flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition"
         >
           <Plus className="h-4 w-4" />
           <span>Add Driver</span>
@@ -121,7 +121,7 @@ export default function DriverManagement() {
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
         <div className="p-6 border-b border-slate-200">
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {["all", "On Duty", "Off Duty", "Suspended"].map((status) => (
               <button
                 key={status}
@@ -139,7 +139,7 @@ export default function DriverManagement() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-[1050px]">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="text-left py-3 px-6 text-xs font-medium text-slate-600 uppercase">

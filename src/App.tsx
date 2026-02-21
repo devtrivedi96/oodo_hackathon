@@ -25,7 +25,7 @@ function ProtectedLayout() {
   return (
     <div className="min-h-screen bg-slate-50 lg:ml-64">
       <Sidebar currentView={currentView} onViewChange={setCurrentView} />
-      <main className="p-4 sm:p-6 lg:p-8">
+      <main className="p-4 pt-20 sm:p-6 sm:pt-24 lg:p-8 lg:pt-8">
         {currentView === "dashboard" && <Dashboard />}
         {currentView === "vehicles" && <VehicleRegistry />}
         {currentView === "drivers" && <DriverManagement />}

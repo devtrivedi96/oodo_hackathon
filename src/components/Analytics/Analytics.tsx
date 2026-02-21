@@ -3,13 +3,27 @@ import { vehicleAPI, tripAPI, expenseAPI, maintenanceAPI } from "../../lib/db";
 import {
   TrendingUp,
   TrendingDown,
-  DollarSign,
+  IndianRupee,
   Fuel,
   Wrench,
+  RefreshCw,
 } from "lucide-react";
+
+const toFiniteNumber = (value: unknown) => {
+  const parsed =
+    typeof value === "number" ? value : Number.parseFloat(String(value));
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const formatINR = (value: unknown) =>
+  `₹${toFiniteNumber(value).toLocaleString(undefined, {
+    maximumFractionDigits: 2,
+  })}`;
 
 export default function Analytics() {
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
   const [analytics, setAnalytics] = useState({
     fuelEfficiency: 0,
     totalRevenue: 0,
@@ -28,6 +42,7 @@ export default function Analytics() {
 
   async function loadAnalytics() {
     try {
+      setRefreshing(true);
       const [vehiclesData, tripsData, expensesData, maintenanceData] =
         await Promise.all([
           vehicleAPI.getAll(),
@@ -38,26 +53,26 @@ export default function Analytics() {
 
       const completedTrips = tripsData.filter((t) => t.status === "Completed");
       const totalDistance = completedTrips.reduce(
-        (sum, t) => sum + (t.actual_distance || 0),
+        (sum, t) => sum + toFiniteNumber(t.actual_distance),
         0,
       );
       const totalFuelLiters = expensesData.reduce(
-        (sum, e) => sum + e.fuel_liters,
+        (sum, e) => sum + toFiniteNumber(e.fuel_liters),
         0,
       );
       const fuelEfficiency =
         totalFuelLiters > 0 ? totalDistance / totalFuelLiters : 0;
 
       const totalFuelCost = expensesData.reduce(
-        (sum, e) => sum + e.fuel_cost,
+        (sum, e) => sum + toFiniteNumber(e.fuel_cost),
         0,
       );
       const totalMiscCost = expensesData.reduce(
-        (sum, e) => sum + e.misc_cost,
+        (sum, e) => sum + toFiniteNumber(e.misc_cost),
         0,
       );
       const totalMaintenanceCost = maintenanceData.reduce(
-        (sum, m) => sum + m.cost,
+        (sum, m) => sum + toFiniteNumber(m.cost),
         0,
       );
       const totalExpenses =
@@ -85,10 +100,12 @@ export default function Analytics() {
         completedTrips: completedTrips.length,
         activeVehicles,
       });
+      setLastUpdated(new Date().toLocaleString());
     } catch (error) {
       console.error("Error loading analytics:", error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }
 
@@ -102,11 +119,32 @@ export default function Analytics() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">
-          Analytics & Reports
-        </h1>
-        <p className="text-slate-600 mt-1">Performance metrics and insights</p>
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-800">
+              Analytics & Reports
+            </h1>
+            <p className="text-slate-600 mt-1">
+              Performance metrics and financial insights
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <p className="text-xs text-slate-500">
+              Last updated: {lastUpdated || "Just now"}
+            </p>
+            <button
+              onClick={loadAnalytics}
+              disabled={refreshing}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition disabled:opacity-60"
+            >
+              <RefreshCw
+                className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+              />
+              Refresh
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -133,7 +171,7 @@ export default function Analytics() {
                 Total Revenue
               </p>
               <p className="text-3xl font-bold text-slate-800 mt-2">
-                ${analytics.totalRevenue.toLocaleString()}
+                {formatINR(analytics.totalRevenue)}
               </p>
               <p className="text-xs text-slate-500 mt-1">Estimated</p>
             </div>
@@ -150,7 +188,7 @@ export default function Analytics() {
                 Total Expenses
               </p>
               <p className="text-3xl font-bold text-slate-800 mt-2">
-                ${analytics.totalExpenses.toLocaleString()}
+                {formatINR(analytics.totalExpenses)}
               </p>
             </div>
             <div className="bg-red-100 p-3 rounded-lg">
@@ -166,11 +204,11 @@ export default function Analytics() {
               <p
                 className={`text-3xl font-bold mt-2 ${analytics.netProfit >= 0 ? "text-green-600" : "text-red-600"}`}
               >
-                ${analytics.netProfit.toLocaleString()}
+                {formatINR(analytics.netProfit)}
               </p>
             </div>
             <div className="bg-slate-100 p-3 rounded-lg">
-              <DollarSign className="h-6 w-6 text-slate-600" />
+              <IndianRupee className="h-6 w-6 text-slate-600" />
             </div>
           </div>
         </div>
@@ -182,7 +220,7 @@ export default function Analytics() {
                 Maintenance Cost
               </p>
               <p className="text-3xl font-bold text-slate-800 mt-2">
-                ${analytics.maintenanceCost.toLocaleString()}
+                {formatINR(analytics.maintenanceCost)}
               </p>
             </div>
             <div className="bg-orange-100 p-3 rounded-lg">
@@ -196,7 +234,7 @@ export default function Analytics() {
             <div>
               <p className="text-sm font-medium text-slate-600">Fuel Cost</p>
               <p className="text-3xl font-bold text-slate-800 mt-2">
-                ${analytics.fuelCost.toLocaleString()}
+                {formatINR(analytics.fuelCost)}
               </p>
             </div>
             <div className="bg-slate-100 p-3 rounded-lg">
@@ -245,7 +283,7 @@ export default function Analytics() {
           <div className="flex items-center justify-between">
             <span className="text-sm text-blue-800">Fuel Costs</span>
             <span className="text-sm font-medium text-blue-900">
-              ${analytics.fuelCost.toLocaleString()} (
+              {formatINR(analytics.fuelCost)} (
               {analytics.totalExpenses > 0
                 ? (
                     (analytics.fuelCost / analytics.totalExpenses) *
@@ -258,7 +296,7 @@ export default function Analytics() {
           <div className="flex items-center justify-between">
             <span className="text-sm text-blue-800">Maintenance Costs</span>
             <span className="text-sm font-medium text-blue-900">
-              ${analytics.maintenanceCost.toLocaleString()} (
+              {formatINR(analytics.maintenanceCost)} (
               {analytics.totalExpenses > 0
                 ? (
                     (analytics.maintenanceCost / analytics.totalExpenses) *

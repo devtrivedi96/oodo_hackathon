@@ -6,7 +6,7 @@ import {
   Users,
   Route,
   Wrench,
-  DollarSign,
+  IndianRupee,
   BarChart3,
   LogOut,
   Menu,
@@ -20,7 +20,7 @@ interface SidebarProps {
 
 export default function Sidebar({ currentView, onViewChange }: SidebarProps) {
   const { signOut, profile } = useAuth();
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
 
   const menuItems = [
     {
@@ -56,7 +56,7 @@ export default function Sidebar({ currentView, onViewChange }: SidebarProps) {
     {
       id: "expenses",
       label: "Expenses",
-      icon: DollarSign,
+      icon: IndianRupee,
       roles: ["Manager", "Analyst"],
     },
     {

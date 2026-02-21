@@ -3,6 +3,7 @@ import {
   expenseAPI,
   vehicleAPI,
   tripAPI,
+  maintenanceAPI,
   Expense,
   Vehicle,
   Trip,
@@ -13,6 +14,15 @@ import ExpenseForm from "./ExpenseForm";
 interface ExpenseWithDetails extends Expense {
   vehicle: Vehicle | null;
   trip: Trip | null;
+}
+
+interface VehicleOperationalCost {
+  vehicleId: string;
+  vehicleName: string;
+  licensePlate: string;
+  fuelCost: number;
+  maintenanceCost: number;
+  totalOperationalCost: number;
 }
 
 const DEFAULT_USD_TO_INR = Number(import.meta.env.VITE_USD_TO_INR) || 83;
@@ -41,6 +51,9 @@ export default function ExpenseTracking() {
     totalCost: 0,
     avgCostPerKm: 0,
   });
+  const [vehicleOperationalCosts, setVehicleOperationalCosts] = useState<
+    VehicleOperationalCost[]
+  >([]);
 
   useEffect(() => {
     loadExpenses();
@@ -48,10 +61,11 @@ export default function ExpenseTracking() {
 
   async function loadExpenses() {
     try {
-      const [expenses, vehicles, trips] = await Promise.all([
+      const [expenses, vehicles, trips, maintenanceLogs] = await Promise.all([
         expenseAPI.getAll(),
         vehicleAPI.getAll(),
         tripAPI.getAll(),
+        maintenanceAPI.getAll(),
       ]);
 
       // Join expenses with vehicles and trips
@@ -82,6 +96,42 @@ export default function ExpenseTracking() {
         totalCost: total,
         avgCostPerKm: avgPerKm,
       });
+
+      const fuelByVehicle = new Map<string, number>();
+      const maintenanceByVehicle = new Map<string, number>();
+
+      expensesData.forEach((expense) => {
+        fuelByVehicle.set(
+          expense.vehicle_id,
+          (fuelByVehicle.get(expense.vehicle_id) || 0) + expense.fuel_cost,
+        );
+      });
+
+      maintenanceLogs.forEach((log) => {
+        maintenanceByVehicle.set(
+          log.vehicle_id,
+          (maintenanceByVehicle.get(log.vehicle_id) || 0) + log.cost,
+        );
+      });
+
+      const perVehicleOperationalCost = vehicles.map((vehicle) => {
+        const fuelCost = fuelByVehicle.get(vehicle.id) || 0;
+        const maintenanceCost = maintenanceByVehicle.get(vehicle.id) || 0;
+        return {
+          vehicleId: vehicle.id,
+          vehicleName: vehicle.name,
+          licensePlate: vehicle.license_plate,
+          fuelCost,
+          maintenanceCost,
+          totalOperationalCost: fuelCost + maintenanceCost,
+        };
+      });
+
+      setVehicleOperationalCosts(
+        perVehicleOperationalCost.sort(
+          (a, b) => b.totalOperationalCost - a.totalOperationalCost,
+        ),
+      );
     } catch (error) {
       console.error("Error loading expenses:", error);
     } finally {
@@ -242,6 +292,69 @@ export default function ExpenseTracking() {
                     </td>
                     <td className="py-4 px-6 text-sm text-slate-600 max-w-xs truncate">
                       {expense.notes || "-"}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+        <div className="p-6 border-b border-slate-200">
+          <h2 className="text-lg font-semibold text-slate-800">
+            Operational Cost by Vehicle
+          </h2>
+          <p className="text-sm text-slate-500 mt-1">
+            Fuel + Maintenance totals per vehicle ID
+          </p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px]">
+            <thead className="bg-slate-50 border-b border-slate-200">
+              <tr>
+                <th className="text-left py-3 px-6 text-xs font-medium text-slate-600 uppercase">
+                  Vehicle ID
+                </th>
+                <th className="text-left py-3 px-6 text-xs font-medium text-slate-600 uppercase">
+                  Vehicle
+                </th>
+                <th className="text-left py-3 px-6 text-xs font-medium text-slate-600 uppercase">
+                  Fuel Cost
+                </th>
+                <th className="text-left py-3 px-6 text-xs font-medium text-slate-600 uppercase">
+                  Maintenance Cost
+                </th>
+                <th className="text-left py-3 px-6 text-xs font-medium text-slate-600 uppercase">
+                  Total Operational Cost
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {vehicleOperationalCosts.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="text-center py-8 text-slate-500">
+                    No vehicle costs available
+                  </td>
+                </tr>
+              ) : (
+                vehicleOperationalCosts.map((item) => (
+                  <tr key={item.vehicleId} className="hover:bg-slate-50 transition">
+                    <td className="py-4 px-6 text-sm text-slate-600 font-mono">
+                      {item.vehicleId.slice(0, 8)}
+                    </td>
+                    <td className="py-4 px-6 text-sm text-slate-800">
+                      {item.vehicleName} ({item.licensePlate})
+                    </td>
+                    <td className="py-4 px-6 text-sm text-slate-600">
+                      {formatMoney(item.fuelCost)}
+                    </td>
+                    <td className="py-4 px-6 text-sm text-slate-600">
+                      {formatMoney(item.maintenanceCost)}
+                    </td>
+                    <td className="py-4 px-6 text-sm font-medium text-slate-800">
+                      {formatMoney(item.totalOperationalCost)}
                     </td>
                   </tr>
                 ))

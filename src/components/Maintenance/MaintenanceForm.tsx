@@ -29,8 +29,8 @@ export default function MaintenanceForm({
   async function loadVehicles() {
     try {
       const data = await vehicleAPI.getAll();
-      // Filter out retired vehicles
-      setVehicles(data.filter((v) => v.status !== "Retired"));
+      // Only available vehicles can be moved into maintenance.
+      setVehicles(data.filter((v) => v.status === "Available"));
     } catch (error) {
       console.error("Error loading vehicles:", error);
     }

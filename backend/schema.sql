@@ -5,6 +5,9 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash VARCHAR(255) NOT NULL,
   full_name VARCHAR(255),
   role ENUM('Manager', 'Dispatcher', 'Safety Officer', 'Analyst') DEFAULT 'Analyst',
+  otp VARCHAR(6) DEFAULT NULL,
+  otp_expiry DATETIME DEFAULT NULL,
+  is_verified BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_email (email)
@@ -50,6 +53,7 @@ CREATE TABLE IF NOT EXISTS trips (
   destination VARCHAR(255) NOT NULL,
   estimated_distance DECIMAL(10, 2) NOT NULL,
   actual_distance DECIMAL(10, 2),
+  revenue DECIMAL(12, 2) DEFAULT 0,
   status ENUM('Draft', 'Dispatched', 'Completed', 'Cancelled') DEFAULT 'Draft',
   dispatched_at TIMESTAMP NULL,
   completed_at TIMESTAMP NULL,

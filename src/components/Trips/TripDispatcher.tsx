@@ -58,6 +58,26 @@ export default function TripDispatcher() {
     setShowForm(true);
   }
 
+  async function refreshDriverCompletionRate(driverId: string) {
+    const allTrips = await tripAPI.getAll();
+    const driverTrips = allTrips.filter((t) => t.driver_id === driverId);
+    const finalizedTrips = driverTrips.filter(
+      (t) => t.status === "Completed" || t.status === "Cancelled",
+    );
+    const completedTrips = finalizedTrips.filter(
+      (t) => t.status === "Completed",
+    ).length;
+
+    const completionRate =
+      finalizedTrips.length > 0
+        ? (completedTrips / finalizedTrips.length) * 100
+        : 0;
+
+    await driverAPI.update(driverId, {
+      completion_rate: Number(completionRate.toFixed(2)),
+    });
+  }
+
   async function handleDispatch(trip: Trip) {
     if (!canCreateTrips) {
       alert("Only Dispatchers and Managers can dispatch trips");
@@ -85,27 +105,47 @@ export default function TripDispatcher() {
   }
 
   async function handleComplete(trip: TripWithDetails) {
-    const actualDistance = prompt("Enter actual distance traveled (km):");
-    if (!actualDistance || isNaN(parseFloat(actualDistance))) return;
+    let actualDistanceValue = 0;
+    let updatedOdometer: number | null = null;
+
+    if (trip.vehicle) {
+      const finalOdometerInput = prompt(
+        `Enter final odometer (current: ${trip.vehicle.odometer} km):`,
+      );
+      if (!finalOdometerInput || isNaN(parseFloat(finalOdometerInput))) return;
+
+      const finalOdometer = parseFloat(finalOdometerInput);
+      if (finalOdometer < trip.vehicle.odometer) {
+        alert("Final odometer cannot be less than current odometer.");
+        return;
+      }
+
+      updatedOdometer = finalOdometer;
+      actualDistanceValue = finalOdometer - trip.vehicle.odometer;
+    } else {
+      const actualDistanceInput = prompt("Enter actual distance traveled (km):");
+      if (!actualDistanceInput || isNaN(parseFloat(actualDistanceInput))) return;
+      actualDistanceValue = parseFloat(actualDistanceInput);
+    }
 
     try {
       await tripAPI.update(trip.id, {
         status: "Completed" as const,
         completed_at: new Date().toISOString(),
-        actual_distance: parseFloat(actualDistance),
+        actual_distance: actualDistanceValue,
       });
 
       if (trip.vehicle) {
-        const newOdometer = trip.vehicle.odometer + parseFloat(actualDistance);
         await vehicleAPI.update(trip.vehicle_id, {
           status: "Available" as const,
-          odometer: newOdometer,
+          odometer: updatedOdometer ?? trip.vehicle.odometer,
         });
       }
 
       await driverAPI.update(trip.driver_id, {
         status: "Off Duty" as const,
       });
+      await refreshDriverCompletionRate(trip.driver_id);
 
       await loadTrips();
     } catch (error) {
@@ -131,6 +171,7 @@ export default function TripDispatcher() {
         await driverAPI.update(trip.driver_id, {
           status: "Off Duty" as const,
         });
+        await refreshDriverCompletionRate(trip.driver_id);
       }
 
       await loadTrips();

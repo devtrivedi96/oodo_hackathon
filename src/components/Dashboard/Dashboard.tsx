@@ -42,6 +42,7 @@ export default function Dashboard() {
   const [filters, setFilters] = useState({
     status: "all",
     vehicleType: "all",
+    region: "all",
   });
 
   const toFiniteNumber = (value: unknown) => {
@@ -117,6 +118,8 @@ export default function Dashboard() {
       filters.vehicleType !== "all" &&
       trip.vehicle?.vehicle_type !== filters.vehicleType
     )
+      return false;
+    if (filters.region !== "all" && trip.vehicle?.region !== filters.region)
       return false;
     return true;
   });
@@ -274,9 +277,25 @@ export default function Dashboard() {
                 ))}
             </select>
 
+            <select
+              value={filters.region}
+              onChange={(e) => setFilters({ ...filters, region: e.target.value })}
+              className="px-4 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200"
+            >
+              <option value="all">All Regions</option>
+              {[...new Set(trips.map((t) => t.vehicle?.region).filter(Boolean))]
+                .map((region) => (
+                  <option key={region} value={region ?? ""}>
+                    {region}
+                  </option>
+                ))}
+            </select>
+
             <button
               type="button"
-              onClick={() => setFilters({ status: "all", vehicleType: "all" })}
+              onClick={() =>
+                setFilters({ status: "all", vehicleType: "all", region: "all" })
+              }
               className="px-4 py-2 border border-slate-300 rounded-lg text-sm text-slate-700 hover:bg-slate-50 transition"
             >
               Reset Filters

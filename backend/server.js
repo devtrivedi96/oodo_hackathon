@@ -161,6 +161,46 @@ app.post("/api/auth/signin", async (req, res) => {
   }
 });
 
+app.post("/api/auth/forgot-password", async (req, res) => {
+  try {
+    const { email, new_password } = req.body;
+
+    if (!email || !new_password) {
+      return res
+        .status(400)
+        .json({ error: "Email and new_password are required" });
+    }
+
+    if (String(new_password).length < 6) {
+      return res
+        .status(400)
+        .json({ error: "New password must be at least 6 characters" });
+    }
+
+    const connection = await pool.getConnection();
+    const [users] = await connection.query("SELECT id FROM users WHERE email = ?", [
+      email,
+    ]);
+
+    if (!Array.isArray(users) || users.length === 0) {
+      connection.release();
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const hashedPassword = await bcrypt.hash(new_password, 10);
+    await connection.query(
+      "UPDATE users SET password_hash = ? WHERE email = ?",
+      [hashedPassword, email],
+    );
+    connection.release();
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error("Forgot password error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get("/api/auth/profile", verifyToken, async (req, res) => {
   try {
     const connection = await pool.getConnection();
@@ -494,6 +534,7 @@ app.post("/api/trips", verifyToken, async (req, res) => {
       origin,
       destination,
       estimated_distance,
+      revenue,
       status,
       created_by,
       actual_distance,
@@ -503,7 +544,7 @@ app.post("/api/trips", verifyToken, async (req, res) => {
 
     const connection = await pool.getConnection();
     const [result] = await connection.query(
-      "INSERT INTO trips (vehicle_id, driver_id, cargo_weight, origin, destination, estimated_distance, status, created_by, actual_distance, dispatched_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO trips (vehicle_id, driver_id, cargo_weight, origin, destination, estimated_distance, revenue, status, created_by, actual_distance, dispatched_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         vehicle_id,
         driver_id,
@@ -511,6 +552,7 @@ app.post("/api/trips", verifyToken, async (req, res) => {
         origin,
         destination,
         estimated_distance,
+        revenue || 0,
         status || "Draft",
         created_by || null,
         actual_distance || 0,
@@ -528,6 +570,7 @@ app.post("/api/trips", verifyToken, async (req, res) => {
       origin,
       destination,
       estimated_distance,
+      revenue: revenue || 0,
       status: status || "Draft",
       created_by: created_by || null,
       actual_distance: actual_distance || 0,
@@ -903,7 +946,34 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "API is running" });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`✓ Server running at http://localhost:${PORT}`);
-});
+async function ensureTripRevenueColumn() {
+  const connection = await pool.getConnection();
+  try {
+    const [columns] = await connection.query(
+      "SHOW COLUMNS FROM trips LIKE 'revenue'",
+    );
+
+    if (Array.isArray(columns) && columns.length === 0) {
+      await connection.query(
+        "ALTER TABLE trips ADD COLUMN revenue DECIMAL(12, 2) DEFAULT 0 AFTER actual_distance",
+      );
+      console.log("✓ Added trips.revenue column");
+    }
+  } finally {
+    connection.release();
+  }
+}
+
+async function startServer() {
+  try {
+    await ensureTripRevenueColumn();
+    app.listen(PORT, () => {
+      console.log(`✓ Server running at http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error("Failed to start server:", error);
+    process.exit(1);
+  }
+}
+
+startServer();

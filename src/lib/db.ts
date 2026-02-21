@@ -66,6 +66,7 @@ export interface Trip {
   destination: string;
   estimated_distance: number;
   actual_distance: number | null;
+  revenue: number;
   status: "Draft" | "Dispatched" | "Completed" | "Cancelled";
   dispatched_at: string | null;
   completed_at: string | null;
@@ -132,6 +133,7 @@ const normalizeTrip = (trip: Trip): Trip => ({
   estimated_distance: toNumber(trip.estimated_distance),
   actual_distance:
     trip.actual_distance === null ? null : toNumber(trip.actual_distance),
+  revenue: toNumber(trip.revenue),
 });
 
 const normalizeMaintenance = (log: MaintenanceLog): MaintenanceLog => ({
@@ -203,6 +205,16 @@ export const authAPI = {
   async getProfile() {
     const { data } = await api.get("/auth/me");
     return data.user;
+  async forgotPassword(email: string, newPassword: string): Promise<void> {
+    await api.post("/auth/forgot-password", {
+      email,
+      new_password: newPassword,
+    });
+  },
+
+  async getProfile(): Promise<Profile> {
+    const { data } = await api.get<Profile>("/auth/profile");
+    return data;
   },
 };
 

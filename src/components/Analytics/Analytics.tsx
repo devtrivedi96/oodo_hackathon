@@ -7,6 +7,8 @@ import {
   Fuel,
   Wrench,
   RefreshCw,
+  Download,
+  FileText,
 } from "lucide-react";
 
 const toFiniteNumber = (value: unknown) => {
@@ -34,6 +36,7 @@ export default function Analytics() {
     vehicleUtilization: 0,
     completedTrips: 0,
     activeVehicles: 0,
+    vehicleROI: 0,
   });
 
   useEffect(() => {
@@ -78,27 +81,41 @@ export default function Analytics() {
       const totalExpenses =
         totalFuelCost + totalMiscCost + totalMaintenanceCost;
 
-      const estimatedRevenue = completedTrips.length * 500;
+      const totalRevenue = completedTrips.reduce(
+        (sum, t) => sum + toFiniteNumber(t.revenue),
+        0,
+      );
 
       const activeVehicles = vehiclesData.filter(
         (v) => v.status !== "Retired",
       ).length;
+      const totalAcquisitionCost = vehiclesData.reduce(
+        (sum, v) => sum + toFiniteNumber(v.acquisition_cost),
+        0,
+      );
       const onTripVehicles = vehiclesData.filter(
         (v) => v.status === "On Trip",
       ).length;
       const utilization =
         activeVehicles > 0 ? (onTripVehicles / activeVehicles) * 100 : 0;
+      const vehicleROI =
+        totalAcquisitionCost > 0
+          ? ((totalRevenue - (totalMaintenanceCost + totalFuelCost)) /
+              totalAcquisitionCost) *
+            100
+          : 0;
 
       setAnalytics({
         fuelEfficiency,
-        totalRevenue: estimatedRevenue,
+        totalRevenue,
         totalExpenses,
-        netProfit: estimatedRevenue - totalExpenses,
+        netProfit: totalRevenue - totalExpenses,
         maintenanceCost: totalMaintenanceCost,
         fuelCost: totalFuelCost,
         vehicleUtilization: utilization,
         completedTrips: completedTrips.length,
         activeVehicles,
+        vehicleROI,
       });
       setLastUpdated(new Date().toLocaleString());
     } catch (error) {
@@ -117,6 +134,35 @@ export default function Analytics() {
     );
   }
 
+  function exportCSV() {
+    const rows = [
+      ["Metric", "Value"],
+      ["Fuel Efficiency (km/L)", analytics.fuelEfficiency.toFixed(2)],
+      ["Total Revenue", analytics.totalRevenue.toFixed(2)],
+      ["Total Expenses", analytics.totalExpenses.toFixed(2)],
+      ["Net Profit", analytics.netProfit.toFixed(2)],
+      ["Maintenance Cost", analytics.maintenanceCost.toFixed(2)],
+      ["Fuel Cost", analytics.fuelCost.toFixed(2)],
+      ["Vehicle Utilization (%)", analytics.vehicleUtilization.toFixed(1)],
+      ["Completed Trips", String(analytics.completedTrips)],
+      ["Active Vehicles", String(analytics.activeVehicles)],
+      ["Vehicle ROI (%)", analytics.vehicleROI.toFixed(2)],
+    ];
+
+    const csvContent = rows.map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `analytics-report-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportPDF() {
+    window.print();
+  }
+
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
@@ -133,6 +179,20 @@ export default function Analytics() {
             <p className="text-xs text-slate-500">
               Last updated: {lastUpdated || "Just now"}
             </p>
+            <button
+              onClick={exportCSV}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-lg transition"
+            >
+              <Download className="h-4 w-4" />
+              CSV
+            </button>
+            <button
+              onClick={exportPDF}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 rounded-lg transition"
+            >
+              <FileText className="h-4 w-4" />
+              PDF
+            </button>
             <button
               onClick={loadAnalytics}
               disabled={refreshing}
@@ -173,7 +233,7 @@ export default function Analytics() {
               <p className="text-3xl font-bold text-slate-800 mt-2">
                 {formatINR(analytics.totalRevenue)}
               </p>
-              <p className="text-xs text-slate-500 mt-1">Estimated</p>
+              <p className="text-xs text-slate-500 mt-1">Completed Trips</p>
             </div>
             <div className="bg-blue-100 p-3 rounded-lg">
               <TrendingUp className="h-6 w-6 text-blue-600" />
@@ -271,6 +331,15 @@ export default function Analytics() {
           <p className="text-sm font-medium text-slate-600">Active Vehicles</p>
           <p className="text-3xl font-bold text-slate-800 mt-2">
             {analytics.activeVehicles}
+          </p>
+        </div>
+
+        <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+          <p className="text-sm font-medium text-slate-600">Vehicle ROI</p>
+          <p
+            className={`text-3xl font-bold mt-2 ${analytics.vehicleROI >= 0 ? "text-green-600" : "text-red-600"}`}
+          >
+            {analytics.vehicleROI.toFixed(2)}%
           </p>
         </div>
       </div>

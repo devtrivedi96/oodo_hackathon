@@ -27,6 +27,7 @@ export default function TripForm({ trip, onClose, onSuccess }: TripFormProps) {
     origin: "",
     destination: "",
     estimated_distance: "",
+    revenue: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -45,6 +46,7 @@ export default function TripForm({ trip, onClose, onSuccess }: TripFormProps) {
         origin: trip.origin,
         destination: trip.destination,
         estimated_distance: trip.estimated_distance.toString(),
+        revenue: trip.revenue.toString(),
       });
     }
   }, [trip]);
@@ -159,6 +161,7 @@ export default function TripForm({ trip, onClose, onSuccess }: TripFormProps) {
         origin: formData.origin,
         destination: formData.destination,
         estimated_distance: parseFloat(formData.estimated_distance),
+        revenue: parseFloat(formData.revenue) || 0,
         status: "Draft" as const,
         created_by: user?.id || null,
         actual_distance: 0,
@@ -314,6 +317,27 @@ export default function TripForm({ trip, onClose, onSuccess }: TripFormProps) {
                 }
                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none"
                 placeholder="e.g., 350"
+                min="0"
+                step="0.01"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Trip Revenue (INR)
+              </label>
+              <input
+                type="number"
+                value={formData.revenue}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    revenue: e.target.value,
+                  })
+                }
+                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-500 outline-none"
+                placeholder="e.g., 45000"
                 min="0"
                 step="0.01"
                 required

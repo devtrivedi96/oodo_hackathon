@@ -43,7 +43,7 @@ const register = async (req, res) => {
 
     // Insert user into database
     await db.query(
-      'INSERT INTO users (name, email, password, role, otp, otp_expiry, is_verified) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO users (full_name, email, password_hash, role, otp, otp_expiry, is_verified) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [name, email, hashedPassword, role || 'Dispatcher', otp, otpExpiry, false]
     );
 
@@ -142,7 +142,7 @@ const login = async (req, res) => {
     }
 
     // Compare password
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
 
     if (!isPasswordValid) {
       return res.status(401).json({ message: 'Invalid email or password' });
@@ -150,7 +150,7 @@ const login = async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { id: user.id, email: user.email, name: user.name },
+      { id: user.id, email: user.email, name: user.full_name },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -160,7 +160,7 @@ const login = async (req, res) => {
       token,
       user: {
         id: user.id,
-        name: user.name,
+        name: user.full_name,
         email: user.email,
         role: user.role
       }
@@ -178,7 +178,7 @@ const login = async (req, res) => {
 const getCurrentUser = async (req, res) => {
   try {
     const [users] = await db.query(
-      'SELECT id, name, email, created_at FROM users WHERE id = ?',
+      'SELECT id, full_name, email, role, created_at FROM users WHERE id = ?',
       [req.user.id]
     );
 

@@ -22,6 +22,8 @@ const EXPENSE_TYPES = [
   { value: "misc", label: "Miscellaneous" },
   { value: "other", label: "Other" },
 ];
+const roundToTwo = (value: number) =>
+  Math.round((value + Number.EPSILON) * 100) / 100;
 
 export default function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -100,6 +102,9 @@ export default function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
     }
 
     if (fuelLiters > 0 && fuelPricePerLiter <= 0) {
+      setError(
+        "Enter fuel price per liter when fuel liters is greater than 0.",
+      );
       setError(
         "Enter fuel price per liter when fuel liters is greater than 0.",
       );
@@ -277,6 +282,8 @@ export default function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
               />
               <p className="text-xs text-slate-500 mt-1">
                 Stored as USD {fuelCostUSD.toFixed(2)} (₹
+                {fuelCostINR.toFixed(2)}) Stored as USD {fuelCostUSD.toFixed(2)}{" "}
+                (₹
                 {fuelCostINR.toFixed(2)})
               </p>
             </div>
@@ -298,6 +305,8 @@ export default function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
               />
               <p className="text-xs text-slate-500 mt-1">
                 Stored as USD {miscCostUSD.toFixed(2)} (₹
+                {miscCostINR.toFixed(2)}) Stored as USD {miscCostUSD.toFixed(2)}{" "}
+                (₹
                 {miscCostINR.toFixed(2)})
               </p>
             </div>

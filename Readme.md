@@ -158,6 +158,14 @@ The following diagram illustrates the high-level architecture of FleetFlow, show
 
 ![FleetFlow Architectural Diagram](assets/architecturaldia.jpeg)
 
+---
+
+## 🏗️ Working Diagram
+
+The working diagram below shows the operational flow and module interactions in FleetFlow:
+
+![FleetFlow Working Diagram](assets/workingdiagram.jpeg)
+
 **Description:**
 The architecture is designed for modularity and scalability. The frontend communicates with the backend via secure APIs, while the backend enforces business logic and interacts with a relational database. This separation ensures robust validation, real-time updates, and maintainability.
 

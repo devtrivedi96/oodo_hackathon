@@ -11,7 +11,7 @@
 *Members:*
 
 - Dev Panchal
-- Ajay Anchal
+- Ajay Panchal
 - Jenish Solanki
 
 ---

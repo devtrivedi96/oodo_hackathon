@@ -14,7 +14,14 @@ const parseNonNegative = (value: string) => {
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
 };
 
-const roundToTwo = (value: number) => Math.round((value + Number.EPSILON) * 100) / 100;
+const roundToTwo = (value: number) =>
+  Math.round((value + Number.EPSILON) * 100) / 100;
+
+const EXPENSE_TYPES = [
+  { value: "fuel", label: "Fuel" },
+  { value: "misc", label: "Miscellaneous" },
+  { value: "other", label: "Other" },
+];
 
 export default function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -33,6 +40,8 @@ export default function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const [expenseType, setExpenseType] = useState(EXPENSE_TYPES[0].value);
 
   useEffect(() => {
     loadData();
@@ -91,7 +100,9 @@ export default function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
     }
 
     if (fuelLiters > 0 && fuelPricePerLiter <= 0) {
-      setError("Enter fuel price per liter when fuel liters is greater than 0.");
+      setError(
+        "Enter fuel price per liter when fuel liters is greater than 0.",
+      );
       setLoading(false);
       return;
     }
@@ -265,7 +276,8 @@ export default function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
                 placeholder="Auto-calculated from liters"
               />
               <p className="text-xs text-slate-500 mt-1">
-                Stored as USD {fuelCostUSD.toFixed(2)} (₹{fuelCostINR.toFixed(2)})
+                Stored as USD {fuelCostUSD.toFixed(2)} (₹
+                {fuelCostINR.toFixed(2)})
               </p>
             </div>
 
@@ -285,7 +297,8 @@ export default function ExpenseForm({ onClose, onSuccess }: ExpenseFormProps) {
                 step="0.01"
               />
               <p className="text-xs text-slate-500 mt-1">
-                Stored as USD {miscCostUSD.toFixed(2)} (₹{miscCostINR.toFixed(2)})
+                Stored as USD {miscCostUSD.toFixed(2)} (₹
+                {miscCostINR.toFixed(2)})
               </p>
             </div>
 

@@ -11,16 +11,61 @@ const generateOTP = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
+let cachedUserSchema = null;
+
+const resolveUserSchema = async () => {
+  if (cachedUserSchema) {
+    return cachedUserSchema;
+  }
+
+  const [columns] = await db.query("SHOW COLUMNS FROM users");
+  const fields = new Set(columns.map((column) => column.Field));
+
+  const fullNameColumn = fields.has("full_name")
+    ? "full_name"
+    : fields.has("name")
+      ? "name"
+      : null;
+  const passwordColumn = fields.has("password_hash")
+    ? "password_hash"
+    : fields.has("password")
+      ? "password"
+      : null;
+
+  cachedUserSchema = {
+    fullNameColumn,
+    passwordColumn,
+    hasOtpColumns:
+      fields.has("otp") && fields.has("otp_expiry") && fields.has("is_verified"),
+  };
+
+  return cachedUserSchema;
+};
+
 /**
  * Register new user
  */
 const register = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
+    const userSchema = await resolveUserSchema();
 
     // Validate input
     if (!name || !email || !password || !role) {
       return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    if (!userSchema.fullNameColumn || !userSchema.passwordColumn) {
+      return res.status(500).json({
+        message: "users table is missing required name/password columns",
+      });
+    }
+
+    if (!userSchema.hasOtpColumns) {
+      return res.status(500).json({
+        message:
+          "users table is missing OTP columns (otp, otp_expiry, is_verified). Run the migration first.",
+      });
     }
 
     if (password.length < 6) {
@@ -43,7 +88,7 @@ const register = async (req, res) => {
 
     // Insert user into database
     await db.query(
-      'INSERT INTO users (full_name, email, password_hash, role, otp, otp_expiry, is_verified) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      `INSERT INTO users (${userSchema.fullNameColumn}, email, ${userSchema.passwordColumn}, role, otp, otp_expiry, is_verified) VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [name, email, hashedPassword, role || 'Dispatcher', otp, otpExpiry, false]
     );
 
@@ -73,9 +118,17 @@ const register = async (req, res) => {
 const verifyOTP = async (req, res) => {
   try {
     const { email, otp } = req.body;
+    const userSchema = await resolveUserSchema();
 
     if (!email || !otp) {
       return res.status(400).json({ message: 'Email and OTP are required' });
+    }
+
+    if (!userSchema.hasOtpColumns) {
+      return res.status(500).json({
+        message:
+          "users table is missing OTP columns (otp, otp_expiry, is_verified). Run the migration first.",
+      });
     }
 
     // Get user
@@ -122,9 +175,16 @@ const verifyOTP = async (req, res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const userSchema = await resolveUserSchema();
 
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
+    }
+
+    if (!userSchema.fullNameColumn || !userSchema.passwordColumn) {
+      return res.status(500).json({
+        message: "users table is missing required name/password columns",
+      });
     }
 
     // Get user
@@ -142,7 +202,7 @@ const login = async (req, res) => {
     }
 
     // Compare password
-    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    const isPasswordValid = await bcrypt.compare(password, user[userSchema.passwordColumn]);
 
     if (!isPasswordValid) {
       return res.status(401).json({ message: 'Invalid email or password' });
@@ -150,7 +210,7 @@ const login = async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { id: user.id, email: user.email, name: user.full_name },
+      { id: user.id, email: user.email, name: user[userSchema.fullNameColumn] },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -160,7 +220,7 @@ const login = async (req, res) => {
       token,
       user: {
         id: user.id,
-        name: user.full_name,
+        name: user[userSchema.fullNameColumn],
         email: user.email,
         role: user.role
       }
@@ -177,8 +237,16 @@ const login = async (req, res) => {
  */
 const getCurrentUser = async (req, res) => {
   try {
+    const userSchema = await resolveUserSchema();
+
+    if (!userSchema.fullNameColumn) {
+      return res.status(500).json({
+        message: "users table is missing required name column",
+      });
+    }
+
     const [users] = await db.query(
-      'SELECT id, full_name, email, role, created_at FROM users WHERE id = ?',
+      `SELECT id, ${userSchema.fullNameColumn} AS full_name, email, role, created_at FROM users WHERE id = ?`,
       [req.user.id]
     );
 
